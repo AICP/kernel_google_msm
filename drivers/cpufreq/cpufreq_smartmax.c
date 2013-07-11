@@ -1343,6 +1343,9 @@ static int cpufreq_governor_smartmax(struct cpufreq_policy *new_policy,
 				}
 
 				pr_info("[smartmax]:" "%s input boost task created\n", __func__);
+
+#endif
+
 				sched_setscheduler_nocheck(boost_task, SCHED_FIFO, &param);
 				get_task_struct(boost_task);
 				boost_task_alive = true;
