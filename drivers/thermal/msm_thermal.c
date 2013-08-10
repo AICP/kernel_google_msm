@@ -25,7 +25,7 @@
 #include <linux/msm_tsens.h>
 #include <linux/msm_thermal.h>
 #include <mach/cpufreq.h>
-
+#include <mach/perflock.h>
 #include <linux/earlysuspend.h>
 
 #define NO_RELEASE_TEMPERATURE	0
