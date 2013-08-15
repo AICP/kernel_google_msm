@@ -31,6 +31,9 @@
 #include <linux/version.h>
 #include <linux/atomic.h>
 #include <linux/gpio.h>
+#include <linux/cpufreq.h>
+#include <linux/hotplug.h>
+#include <linux/cpu.h>
 
 #include <linux/input/lge_touch_core.h>
 
@@ -47,6 +50,10 @@ struct lge_touch_attribute {
 static int is_pressure;
 static int is_width_major;
 static int is_width_minor;
+
+/* extern vars */
+bool is_touching;
+u64 freq_boosted_time;
 
 #define LGE_TOUCH_ATTR(_name, _mode, _show, _store)               \
 	struct lge_touch_attribute lge_touch_attr_##_name =       \
@@ -375,13 +382,19 @@ static int touch_ic_init(struct lge_touch_data *ts)
 		goto err_out_critical;
 	}
 
-	atomic_set(&ts->next_work, 0);
-	atomic_set(&ts->device_init, 1);
-
 	if (touch_device_func->init == NULL) {
 		TOUCH_INFO_MSG("There is no specific IC init function\n");
 		goto err_out_critical;
 	}
+
+	/* Do the soft reset to make sure the controller is reset OK */
+	if (touch_device_func->ic_ctrl(ts->client, IC_CTRL_RESET_CMD, 0) < 0) {
+		TOUCH_ERR_MSG("RESET FAILED\n");
+		goto err_out_retry;
+	}
+
+	atomic_set(&ts->next_work, 0);
+	atomic_set(&ts->device_init, 1);
 
 	if (touch_device_func->init(ts->client, &ts->fw_info) < 0) {
 		TOUCH_ERR_MSG("specific device initialization fail\n");
@@ -797,6 +810,9 @@ static void touch_work_func(struct work_struct *work)
 	int next_work = 0;
 	int ret;
 
+    is_touching = true;
+	freq_boosted_time = ktime_to_ms(ktime_get());
+    
 	atomic_dec(&ts->next_work);
 	ts->ts_data.total_num = 0;
 
