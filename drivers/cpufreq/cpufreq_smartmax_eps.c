@@ -103,8 +103,8 @@ extern int tegra_input_boost (struct cpufreq_policy *policy,
 #endif
 
 #ifdef CONFIG_CPU_FREQ_GOV_SMARTMAX_M7
-#define DEFAULT_SUSPEND_IDEAL_FREQ 594000
-#define DEFAULT_AWAKE_IDEAL_FREQ 702000
+#define DEFAULT_SUSPEND_IDEAL_FREQ 384000
+#define DEFAULT_AWAKE_IDEAL_FREQ 594000
 #define DEFAULT_RAMP_UP_STEP 200000
 #define DEFAULT_RAMP_DOWN_STEP 200000
 #define DEFAULT_MAX_CPU_LOAD 70
@@ -112,26 +112,26 @@ extern int tegra_input_boost (struct cpufreq_policy *policy,
 #define DEFAULT_UP_RATE 30000
 #define DEFAULT_DOWN_RATE 60000
 #define DEFAULT_SAMPLING_RATE 30000
-#define DEFAULT_INPUT_BOOST_DURATION 150000
-#define DEFAULT_TOUCH_POKE_FREQ 1350000
-#define DEFAULT_BOOST_FREQ 1350000
+#define DEFAULT_INPUT_BOOST_DURATION 90000
+#define DEFAULT_TOUCH_POKE_FREQ 1134000
+#define DEFAULT_BOOST_FREQ 1134000
 #define DEFAULT_IO_IS_BUSY 0
 #define DEFAULT_IGNORE_NICE 1
 #endif
 
 #ifdef CONFIG_CPU_FREQ_GOV_SMARTMAX_FIND5
 #define DEFAULT_SUSPEND_IDEAL_FREQ 384000
-#define DEFAULT_AWAKE_IDEAL_FREQ 702000
-#define DEFAULT_RAMP_UP_STEP 300000
+#define DEFAULT_AWAKE_IDEAL_FREQ 594000
+#define DEFAULT_RAMP_UP_STEP 200000
 #define DEFAULT_RAMP_DOWN_STEP 200000
-#define DEFAULT_MAX_CPU_LOAD 70
-#define DEFAULT_MIN_CPU_LOAD 40
+#define DEFAULT_MAX_CPU_LOAD 90
+#define DEFAULT_MIN_CPU_LOAD 60
 #define DEFAULT_UP_RATE 30000
 #define DEFAULT_DOWN_RATE 60000
 #define DEFAULT_SAMPLING_RATE 30000
-#define DEFAULT_INPUT_BOOST_DURATION 1200000
-#define DEFAULT_TOUCH_POKE_FREQ 1350000
-#define DEFAULT_BOOST_FREQ 1350000
+#define DEFAULT_INPUT_BOOST_DURATION 900000
+#define DEFAULT_TOUCH_POKE_FREQ 1134000
+#define DEFAULT_BOOST_FREQ 1134000
 #define DEFAULT_IO_IS_BUSY 0
 #define DEFAULT_IGNORE_NICE 1
 #endif
@@ -288,15 +288,15 @@ static struct early_suspend smartmax_early_suspend_handler;
 #define MIN_SAMPLING_RATE_RATIO			(2)
 #define MICRO_FREQUENCY_MIN_SAMPLE_RATE		(10000)
 
-static int cpufreq_governor_smartmax(struct cpufreq_policy *policy,
+static int cpufreq_governor_smartmax_eps(struct cpufreq_policy *policy,
 		unsigned int event);
 
-#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX
+#ifndef CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX_EPS
 static
 #endif
-struct cpufreq_governor cpufreq_gov_smartmax = { 
-    .name = "smartmax", 
-    .governor = cpufreq_governor_smartmax, 
+struct cpufreq_governor cpufreq_gov_smartmax_eps = { 
+    .name = "smartmax_eps", 
+    .governor = cpufreq_governor_smartmax_eps, 
     .max_transition_latency = TRANSITION_LATENCY_LIMIT, 
     .owner = THIS_MODULE,
     };
@@ -1088,7 +1088,7 @@ static struct attribute * smartmax_attributes[] = {
 
 static struct attribute_group smartmax_attr_group = { 
 	.attrs = smartmax_attributes, 
-	.name = "smartmax", 
+	.name = "smartmax_eps", 
 	};
 
 static int cpufreq_smartmax_boost_task(void *data) {
@@ -1275,7 +1275,7 @@ static struct input_handler dbs_input_handler = {
 	.event = dbs_input_event,
 	.connect = dbs_input_connect, 
 	.disconnect = dbs_input_disconnect,
-	.name = "cpufreq_smartmax", 
+	.name = "cpufreq_smartmax_eps", 
 	.id_table = dbs_ids, 
 	};
 #endif
@@ -1298,7 +1298,7 @@ static void smartmax_late_resume(struct early_suspend *h)
 }
 #endif
 
-static int cpufreq_governor_smartmax(struct cpufreq_policy *new_policy,
+static int cpufreq_governor_smartmax_eps(struct cpufreq_policy *new_policy,
 		unsigned int event) {
 	unsigned int cpu = new_policy->cpu;
 	int rc;
@@ -1487,10 +1487,10 @@ static int __init cpufreq_smartmax_init(void) {
 	smartmax_early_suspend_handler.level = EARLY_SUSPEND_LEVEL_DISABLE_FB + 100;
 #endif
 	
-	return cpufreq_register_governor(&cpufreq_gov_smartmax);
+	return cpufreq_register_governor(&cpufreq_gov_smartmax_eps);
 }
 
-#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX
+#ifdef CONFIG_CPU_FREQ_DEFAULT_GOV_SMARTMAX_EPS
 fs_initcall(cpufreq_smartmax_init);
 #else
 module_init(cpufreq_smartmax_init);
