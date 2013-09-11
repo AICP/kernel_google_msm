@@ -68,14 +68,14 @@ static spinlock_t down_cpumask_lock;
 static struct mutex set_speed_lock;
 
 /* Hi speed to bump to from lo speed when load burst (default max) */
-#define DEFAULT_HISPEED_FREQ 1026000
+#define DEFAULT_HISPEED_FREQ 1512000
 static u64 hispeed_freq;
 
 /* Bump the CPU to hispeed_freq if its load is >= 50% */
 #define HISPEED_FREQ_LOAD 50
 
 /* If the CPU load is >= 85% it goes to max frequency */
-#define DEFAULT_UP_THRESHOLD 85
+#define DEFAULT_UP_THRESHOLD 70
 static unsigned long up_threshold;
 
 /*
@@ -107,7 +107,7 @@ static int input_boost_freq;
 /*
  * Duration of the touch boost
  */
-#define DEFAULT_INPUT_BOOST_FREQ_DURATION 1000
+#define DEFAULT_INPUT_BOOST_FREQ_DURATION 12000
 static int input_boost_freq_duration;
 
 /*
