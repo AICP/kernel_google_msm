@@ -26,7 +26,7 @@
  
 #include <mach/cpufreq.h>
 
-#define DEFAULT_FIRST_LEVEL 55
+#define DEFAULT_FIRST_LEVEL 70
 #define DEFAULT_SUSPEND_FREQ 702000
 #define DEFAULT_CORES_ON_TOUCH 2
 #define HIGH_LOAD_COUNTER 20
