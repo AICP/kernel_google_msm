@@ -696,6 +696,22 @@ static ssize_t show_bios_limit(struct cpufreq_policy *policy, char *buf)
 	return sprintf(buf, "%u\n", policy->cpuinfo.max_freq);
 }
 
+#ifdef CONFIG_USERSPACE_VOLTAGE_CONTROL
+
+extern ssize_t acpuclk_get_vdd_levels_str(char *buf);
+extern void acpuclk_set_vdd(const char *buf);
+
+static ssize_t show_UV_mV_table(struct cpufreq_policy *policy, char *buf) {
+  return acpuclk_get_vdd_levels_str(buf);
+}
+
+static ssize_t store_UV_mV_table(struct cpufreq_policy *policy, const char *buf, size_t count) {
+  acpuclk_set_vdd(buf);
+  return count;
+}
+
+#endif
+
 #ifdef CONFIG_HOTPLUG_CPU
 static ssize_t store_scaling_max_freq(struct cpufreq_policy *policy,
 					const char *buf, size_t count)
@@ -832,6 +848,9 @@ cpufreq_freq_attr_rw(scaling_max_freq);
 #endif
 cpufreq_freq_attr_rw(scaling_governor);
 cpufreq_freq_attr_rw(scaling_setspeed);
+#ifdef CONFIG_USERSPACE_VOLTAGE_CONTROL
+cpufreq_freq_attr_rw(UV_mV_table);
+#endif
 
 static struct attribute *default_attrs[] = {
 	&cpuinfo_min_freq.attr,
@@ -846,6 +865,9 @@ static struct attribute *default_attrs[] = {
 	&scaling_driver.attr,
 	&scaling_available_governors.attr,
 	&scaling_setspeed.attr,
+#ifdef CONFIG_USERSPACE_VOLTAGE_CONTROL
+      &UV_mV_table.attr,
+#endif
 	NULL
 };
 
