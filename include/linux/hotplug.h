@@ -29,14 +29,11 @@ extern unsigned int get_fourth_level(void);
 extern unsigned int get_suspend_frequency(void);
 extern unsigned int get_cores_on_touch(void);
 
+extern void is_touching(bool touch, unsigned long time, 
+	bool one_touch);
 extern unsigned int get_input_boost_freq(void);
 extern unsigned int get_min_sample_time(void);
 extern bool get_dynamic_scaling(void);
 extern unsigned int get_hispeed_freq(void);
-
-extern bool is_touching;
-extern u64 freq_boosted_time;
-
-extern unsigned int report_load_at_max_freq(int cpu);
 
 #endif
