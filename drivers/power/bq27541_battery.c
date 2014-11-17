@@ -653,7 +653,7 @@ static int bq27541_get_psp(int reg_offset, enum power_supply_property psp,
 		}
 
 		bq27541_device->old_temperature = val->intval = ret;
-		BAT_NOTICE("temperature= %d (0.1\A2XC)\n", val->intval);
+		BAT_NOTICE("temperature= %d (0.1\\A2XC)\n", val->intval);
 	}
 	return 0;
 }
