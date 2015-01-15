@@ -13,13 +13,14 @@ ifeq ($(CONFIG_ZBOOT_ROM_MMCIF),y)
 OBJS		+= mmcif-sh7372.o
 endif
 
-# Ensure that SDHI loader code appears early in the image
-# to minimise that number of bocks that have to be read in
-# order to load it.
-ifeq ($(CONFIG_ZBOOT_ROM_SH_MOBILE_SDHI),y)
-OBJS		+= sdhi-shmobile.o
-OBJS		+= sdhi-sh7372.o
+AFLAGS_misc.o +=-Wa,-march=armv7-a$(plus_sec)
+MISC = misc.o
+
+AFLAGS_decompress.o += -Wa,-march=armv7-a$(plus_sec)
+ifeq ($(CONFIG_KERNEL_LZ4),y)
+CFLAGS_decompress.o := -Os
 endif
+DECOMPRESS = decompress.o
 
 AFLAGS_head.o += -DTEXT_OFFSET=$(TEXT_OFFSET)
 HEAD	= head.o
