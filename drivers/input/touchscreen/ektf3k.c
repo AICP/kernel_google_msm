@@ -213,10 +213,10 @@ static int pwrkey_suspend = 1;
 static int lid_suspend = 1;
 static int s2w_orientation = 0;
 static int shortsweep = 0;
-static int dt2w_switch = 1;
+static int dt2w_switch = 0;
 static int dt2w_switch_temp = 1;
 static int dt2w_changed = 0;
-static int s2w_switch = 1;
+static int s2w_switch = 0;
 static int s2w_switch_temp = 1;
 static int s2w_changed = 0;
 
