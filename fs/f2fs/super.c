@@ -502,8 +502,9 @@ int f2fs_sync_fs(struct super_block *sb, int sync)
 	if (sync) {
 		struct cp_control cpc;
 
-		cpc.reason = __get_cp_reason(sbi);
-
+		cpc.reason = (test_opt(sbi, FASTBOOT) ||
+					is_sbi_flag_set(sbi, SBI_IS_CLOSE)) ?
+						CP_UMOUNT : CP_SYNC;
 		mutex_lock(&sbi->gc_mutex);
 		write_checkpoint(sbi, &cpc);
 		mutex_unlock(&sbi->gc_mutex);
