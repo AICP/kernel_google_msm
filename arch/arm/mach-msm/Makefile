@@ -403,7 +403,3 @@ obj-$(CONFIG_MSM_CPU_PWRCTL) +=  msm_cpu_pwrctl.o
 obj-$(CONFIG_CPU_FREQ_MSM) += cpufreq.o
 
 obj-$(CONFIG_ARCH_RANDOM) += early_random.o
-
-obj-$(CONFIG_MSM_CPUFREQ_LIMITER) += cpufreq_limit.o
-
-obj-$(CONFIG_LCD_KCAL_STANDALONE) += msm_kcal_ctrl.o
