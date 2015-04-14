@@ -2463,6 +2463,7 @@ static int msm_rotator_start(unsigned long arg,
 				fast_yuv_en = !fast_yuv_invalid_size_checker(
 						info.rotations,
 						info.src.width,
+						info.src.height,
 						dst_w,
 						info.src.height,
 						dst_h,
@@ -2643,6 +2644,7 @@ static int msm_rotator_finish(unsigned long arg)
 	if (copy_from_user(&session_id, (void __user *)arg, sizeof(s)))
 		return -EFAULT;
 
+	rot_wait_for_commit_queue(true);
 	mutex_lock(&msm_rotator_dev->rotator_lock);
 	for (s = 0; s < MAX_SESSIONS; s++) {
 		if ((msm_rotator_dev->rot_session[s] != NULL) &&
