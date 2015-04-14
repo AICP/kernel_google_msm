@@ -39,8 +39,15 @@
 #include <linux/notifier.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
+#include <linux/swap.h>
 #include <linux/fs.h>
 #include <linux/cpuset.h>
+
+#ifdef CONFIG_HIGHMEM
+#define _ZONE ZONE_HIGHMEM
+#else
+#define _ZONE ZONE_NORMAL
+#endif
 
 static uint32_t lowmem_debug_level = 1;
 static int lowmem_adj[6] = {
