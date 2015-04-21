@@ -37,9 +37,9 @@
 #include <linux/sched.h>
 #include <linux/rcupdate.h>
 #include <linux/notifier.h>
+#include <linux/swap.h>
 #include <linux/mutex.h>
 #include <linux/delay.h>
-#include <linux/swap.h>
 #include <linux/fs.h>
 #include <linux/cpuset.h>
 

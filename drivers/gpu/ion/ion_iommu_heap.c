@@ -112,7 +112,7 @@ static int ion_iommu_heap_allocate(struct ion_heap *heap,
 		struct sg_table *table;
 		int j;
 		unsigned int num_large_pages = 0;
-		long size_remaining = PAGE_ALIGN(size);
+		unsigned long size_remaining = PAGE_ALIGN(size);
 		unsigned int max_order = orders[0];
 		unsigned int page_tbl_size;
 
