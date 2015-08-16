@@ -328,17 +328,13 @@ static size_t f2fs_xattr_list_acl(struct dentry *dentry, char *list,
 	return size;
 }
 
-static int f2fs_xattr_get_acl(struct dentry *dentry, const char *name,
-		void *buffer, size_t size, int type)
-{
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
-	struct posix_acl *acl;
-	int error;
+	*acl = f2fs_acl_clone(p, GFP_NOFS);
+	if (!*acl)
+		goto no_mem;
 
-	if (strcmp(name, "") != 0)
-		return -EINVAL;
-	if (!test_opt(sbi, POSIX_ACL))
-		return -EOPNOTSUPP;
+	ret = f2fs_acl_create_masq(*acl, mode);
+	if (ret < 0)
+		goto no_mem_clone;
 
 	acl = f2fs_get_acl(dentry->d_inode, type);
 	if (IS_ERR(acl))
@@ -348,7 +344,26 @@ static int f2fs_xattr_get_acl(struct dentry *dentry, const char *name,
 	error = posix_acl_to_xattr(acl, buffer, size);
 	posix_acl_release(acl);
 
-	return error;
+	if (!S_ISDIR(*mode)) {
+		posix_acl_release(p);
+		*default_acl = NULL;
+	} else {
+		*default_acl = p;
+	}
+	return 0;
+
+apply_umask:
+	*mode &= ~current_umask();
+no_acl:
+	*default_acl = NULL;
+	*acl = NULL;
+	return 0;
+
+no_mem_clone:
+	posix_acl_release(*acl);
+no_mem:
+	posix_acl_release(p);
+	return -ENOMEM;
 }
 
 static int f2fs_xattr_set_acl(struct dentry *dentry, const char *name,
