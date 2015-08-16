@@ -1446,9 +1446,15 @@ static inline void f2fs_stop_checkpoint(struct f2fs_sb_info *sbi)
 	sbi->sb->s_flags |= MS_RDONLY;
 }
 
-static inline struct inode *file_inode(struct file *f)
+static inline bool is_dot_dotdot(const struct qstr *str)
 {
-	return f->f_path.dentry->d_inode;
+	if (str->len == 1 && str->name[0] == '.')
+		return true;
+
+	if (str->len == 2 && str->name[0] == '.' && str->name[1] == '.')
+		return true;
+
+	return false;
 }
 
 #define get_inode_mode(i) \
