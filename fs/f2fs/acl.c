@@ -312,55 +312,46 @@ int f2fs_acl_chmod(struct inode *inode)
 static size_t f2fs_xattr_list_acl(struct dentry *dentry, char *list,
 		size_t list_size, const char *name, size_t name_len, int type)
 {
-	struct f2fs_sb_info *sbi = F2FS_SB(dentry->d_sb);
-	const char *xname = POSIX_ACL_XATTR_DEFAULT;
-	size_t size;
+	struct posix_acl *p;
+	struct posix_acl *clone;
+	int ret;
 
-	if (!test_opt(sbi, POSIX_ACL))
+	*acl = NULL;
+	*default_acl = NULL;
+
+	if (S_ISLNK(*mode) || !IS_POSIXACL(dir))
 		return 0;
 
-	if (type == ACL_TYPE_ACCESS)
-		xname = POSIX_ACL_XATTR_ACCESS;
+	p = __f2fs_get_acl(dir, ACL_TYPE_DEFAULT, dpage);
+	if (!p || p == ERR_PTR(-EOPNOTSUPP)) {
+		*mode &= ~current_umask();
+		return 0;
+	}
+	if (IS_ERR(p))
+		return PTR_ERR(p);
 
-	size = strlen(xname) + 1;
-	if (list && size <= list_size)
-		memcpy(list, xname, size);
-	return size;
-}
-
-	*acl = f2fs_acl_clone(p, GFP_NOFS);
-	if (!*acl)
+	clone = f2fs_acl_clone(p, GFP_NOFS);
+	if (!clone)
 		goto no_mem;
 
-	ret = f2fs_acl_create_masq(*acl, mode);
+	ret = f2fs_acl_create_masq(clone, mode);
 	if (ret < 0)
 		goto no_mem_clone;
 
-	acl = f2fs_get_acl(dentry->d_inode, type);
-	if (IS_ERR(acl))
-		return PTR_ERR(acl);
-	if (!acl)
-		return -ENODATA;
-	error = posix_acl_to_xattr(acl, buffer, size);
-	posix_acl_release(acl);
+	if (ret == 0)
+		posix_acl_release(clone);
+	else
+		*acl = clone;
 
-	if (!S_ISDIR(*mode)) {
+	if (!S_ISDIR(*mode))
 		posix_acl_release(p);
-		*default_acl = NULL;
-	} else {
+	else
 		*default_acl = p;
-	}
-	return 0;
 
-apply_umask:
-	*mode &= ~current_umask();
-no_acl:
-	*default_acl = NULL;
-	*acl = NULL;
 	return 0;
 
 no_mem_clone:
-	posix_acl_release(*acl);
+	posix_acl_release(clone);
 no_mem:
 	posix_acl_release(p);
 	return -ENOMEM;
