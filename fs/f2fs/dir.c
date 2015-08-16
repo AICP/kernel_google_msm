@@ -766,15 +766,16 @@ bool f2fs_empty_dir(struct inode *dir)
 	return true;
 }
 
-bool f2fs_fill_dentries(struct dir_context *ctx, struct f2fs_dentry_ptr *d,
-				unsigned int start_pos, struct f2fs_str *fstr)
+bool f2fs_fill_dentries(struct file *file, void *dirent, filldir_t filldir,
+		struct f2fs_dentry_ptr *d, unsigned int n, unsigned int bit_pos,
+		struct f2fs_str *fstr)
 {
 	unsigned int start_bit_pos = bit_pos;
 	unsigned char d_type;
 	struct f2fs_dir_entry *de = NULL;
 	struct f2fs_str de_name = FSTR_INIT(NULL, 0);
-
-	bit_pos = ((unsigned long)ctx->pos % d->max);
+	unsigned char *types = f2fs_filetype_table;
+	int over;
 
 	while (bit_pos < d->max) {
 		d_type = DT_UNKNOWN;
@@ -783,10 +784,9 @@ bool f2fs_fill_dentries(struct dir_context *ctx, struct f2fs_dentry_ptr *d,
 			break;
 
 		de = &d->dentry[bit_pos];
-		if (de->file_type < F2FS_FT_MAX)
-			d_type = f2fs_filetype_table[de->file_type];
-		else
-			d_type = DT_UNKNOWN;
+
+		if (types && de->file_type < F2FS_FT_MAX)
+			d_type = types[de->file_type];
 
 		/* encrypted case */
 		de_name.name = d->filename[bit_pos];
@@ -804,8 +804,11 @@ bool f2fs_fill_dentries(struct dir_context *ctx, struct f2fs_dentry_ptr *d,
 				return true;
 		}
 
-		if (!dir_emit(ctx, de_name.name, de_name.len,
-					le32_to_cpu(de->ino), d_type))
+		over = filldir(dirent, de_name.name, de_name.len,
+					(n * d->max) + bit_pos,
+					le32_to_cpu(de->ino), d_type);
+		if (over) {
+			file->f_pos += bit_pos - start_bit_pos;
 			return true;
 		}
 
@@ -825,6 +828,7 @@ static int f2fs_readdir(struct file *file, void *dirent, filldir_t filldir)
 	struct file_ra_state *ra = &file->f_ra;
 	struct f2fs_dentry_ptr d;
 	struct f2fs_str fstr = FSTR_INIT(NULL, 0);
+	unsigned int n = 0;
 	int err = 0;
 
 	if (f2fs_encrypted_inode(inode)) {
@@ -839,9 +843,12 @@ static int f2fs_readdir(struct file *file, void *dirent, filldir_t filldir)
 	}
 
 	if (f2fs_has_inline_dentry(inode)) {
-		err = f2fs_read_inline_dir(file, ctx, &fstr);
+		err = f2fs_read_inline_dir(file, dirent, filldir, &fstr);
 		goto out;
 	}
+
+	bit_pos = (pos % NR_DENTRY_IN_BLOCK);
+	n = (pos / NR_DENTRY_IN_BLOCK);
 
 	/* readahead for multi pages of dir */
 	if (npages - n > 1 && !ra_has_index(ra, n))
@@ -857,7 +864,7 @@ static int f2fs_readdir(struct file *file, void *dirent, filldir_t filldir)
 
 		make_dentry_ptr(inode, &d, (void *)dentry_blk, 1);
 
-		if (f2fs_fill_dentries(ctx, &d, n * NR_DENTRY_IN_BLOCK, &fstr))
+		if (f2fs_fill_dentries(file, dirent, filldir, &d, n, bit_pos, &fstr))
 			goto stop;
 
 		bit_pos = 0;
