@@ -34,7 +34,9 @@ void f2fs_set_inode_flags(struct inode *inode)
 	if (flags & FS_NOATIME_FL)
 		inode->i_flags |= S_NOATIME;
 	if (flags & FS_DIRSYNC_FL)
-		inode->i_flags |= S_DIRSYNC;
+		new_fl |= S_DIRSYNC;
+	inode_set_flags(inode, new_fl,
+			S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC);
 }
 
 static void __get_inode_rdev(struct inode *inode, struct f2fs_inode *ri)
