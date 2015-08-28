@@ -34,9 +34,7 @@ void f2fs_set_inode_flags(struct inode *inode)
 	if (flags & FS_NOATIME_FL)
 		inode->i_flags |= S_NOATIME;
 	if (flags & FS_DIRSYNC_FL)
-		new_fl |= S_DIRSYNC;
-	inode_set_flags(inode, new_fl,
-			S_SYNC|S_APPEND|S_IMMUTABLE|S_NOATIME|S_DIRSYNC);
+		inode->i_flags |= S_DIRSYNC;
 }
 
 static void __get_inode_rdev(struct inode *inode, struct f2fs_inode *ri)
@@ -340,7 +338,6 @@ void f2fs_evict_inode(struct inode *inode)
 	if (inode->i_nlink || is_bad_inode(inode))
 		goto no_delete;
 
-	sb_start_intwrite(inode->i_sb);
 	set_inode_flag(fi, FI_NO_ALLOC);
 	i_size_write(inode, 0);
 
@@ -391,7 +388,7 @@ out_clear:
 	if (fi->i_crypt_info)
 		f2fs_free_encryption_info(inode, fi->i_crypt_info);
 #endif
-	clear_inode(inode);
+	end_writeback(inode);
 }
 
 /* caller should call f2fs_lock_op() */
