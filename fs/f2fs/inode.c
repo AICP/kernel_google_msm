@@ -337,6 +337,7 @@ void f2fs_evict_inode(struct inode *inode)
 	if (inode->i_nlink || is_bad_inode(inode))
 		goto no_delete;
 
+	sb_start_intwrite(inode->i_sb);
 	set_inode_flag(fi, FI_NO_ALLOC);
 	i_size_write(inode, 0);
 
@@ -368,7 +369,7 @@ out_clear:
 	if (fi->i_crypt_info)
 		f2fs_free_encryption_info(inode, fi->i_crypt_info);
 #endif
-	end_writeback(inode);
+	clear_inode(inode);
 }
 
 /* caller should call f2fs_lock_op() */

@@ -79,9 +79,9 @@ struct llist_node *llist_reverse_order(struct llist_node *head)
 /**
  * Copied from latest linux/list.h
  * list_last_entry - get the last element from a list
- * @ptr:        the list head to take the element from.
- * @type:       the type of the struct this is embedded in.
- * @member:     the name of the list_struct within the struct.
+ * @ptr:	the list head to take the element from.
+ * @type:	the type of the struct this is embedded in.
+ * @member:	the name of the list_struct within the struct.
  *
  * Note, that list is expected to be not empty.
  */
@@ -1491,7 +1491,7 @@ static inline bool is_merged_page(struct f2fs_sb_info *sbi,
 		return false;
 	}
 
-	__bio_for_each_segment(bvec, io->bio, i, 0) {
+	bio_for_each_segment_all(bvec, io->bio, i) {
 
 		if (bvec->bv_page->mapping) {
 			target = bvec->bv_page;
