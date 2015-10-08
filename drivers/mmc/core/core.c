@@ -50,14 +50,6 @@
 
 extern void kernel_restart(char *cmd);
 
-#define CREATE_TRACE_POINTS
-#include <trace/events/mmc.h>
-
-/* If the device is not responding */
-#define MMC_CORE_TIMEOUT_MS	(10 * 60 * 1000) /* 10 minute timeout */
-
-static void mmc_clk_scaling(struct mmc_host *host, bool from_wq);
-
 /*
  * Background operations can take a long time, depending on the housekeeping
  * operations the card has to perform.

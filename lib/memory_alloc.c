@@ -186,10 +186,14 @@ static void *__alloc(struct mem_pool *mpool, unsigned long size,
 	if (!node)
 		goto out;
 
+#ifndef CONFIG_UML
 	if (cached)
 		vaddr = ioremap_cached(paddr, aligned_size);
 	else
 		vaddr = ioremap(paddr, aligned_size);
+#else
+	vaddr = NULL;  /* hack to allow this to compile on ARCH=um */
+#endif
 
 	if (!vaddr)
 		goto out_kfree;
@@ -211,8 +215,10 @@ static void *__alloc(struct mem_pool *mpool, unsigned long size,
 
 	return vaddr;
 out_kfree:
+#ifndef CONFIG_UML
 	if (vaddr)
 		iounmap(vaddr);
+#endif
 	kfree(node);
 out:
 	gen_pool_free(mpool->gpool, paddr, aligned_size);
@@ -226,14 +232,10 @@ static void __free(void *vaddr, bool unmap)
 	if (!node)
 		return;
 
+#ifndef CONFIG_UML
 	if (unmap)
-		/*
-		 * We need the double cast because otherwise gcc complains about
-		 * cast to pointer of different size. This is technically a down
-		 * cast but if unmap is being called, this had better be an
-		 * actual 32-bit pointer anyway.
-		 */
-		iounmap((void *)(unsigned long)node->vaddr);
+		iounmap(node->vaddr);
+#endif
 
 	gen_pool_free(node->mpool->gpool, node->paddr, node->len);
 	node->mpool->free += node->len;
