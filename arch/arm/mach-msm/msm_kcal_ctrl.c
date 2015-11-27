@@ -570,4 +570,3 @@ device_initcall(kcal_ctrl_init);
 
 //MODULE_DESCRIPTION("Generic MSM KCAL driver");
 MODULE_LICENSE("GPL and additional rights");
-
