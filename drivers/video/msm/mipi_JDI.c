@@ -85,8 +85,8 @@ static char backlight_control4[] = {0xCE, 0x7D, 0x40, 0x48, 0x56, 0x67, 0x78,
 static char LTPS_timing_setting[2] = {0xC6, 0x78};
 static char sequencer_timing_control[2] = {0xD6, 0x01};
 
-static unsigned int cabc_level = 0x00;
-static unsigned int sre_level = 0x00;
+static unsigned int cabc_level = 0;
+static unsigned int sre_level = 0;
 static bool aco_enabled = false;
 
 static struct dsi_cmd_desc JDI_display_on_cmds[] = {
@@ -273,19 +273,33 @@ static void JDI_command_cabc(void)
 {
 	write_cabc[1] = CABC_OFF;
 
-	if (cabc_level == 1)
+	switch (cabc_level) {
+	case 1:
 		write_cabc[1] |= CABC_UI;
-	else if (cabc_level == 2)
+		break;
+	case 2:
 		write_cabc[1] |= CABC_IMAGE;
-	else if (cabc_level == 3)
+		break;
+	case 3:
 		write_cabc[1] |= CABC_VIDEO;
+		break;
+	default:
+		break;
+	}
 
-	if (sre_level == 1)
+	switch (sre_level) {
+	case 1:
 		write_cabc[1] |= SRE_WEAK;
-	else if (sre_level == 2)
+		break;
+	case 2:
 		write_cabc[1] |= SRE_MEDIUM;
-	else if (sre_level == 3)
+		break;
+	case 3:
 		write_cabc[1] |= SRE_STRONG;
+		break;
+	default:
+		break;
+	}
 
 	if (aco_enabled)
 		write_cabc[1] |= CABC_ACO;
@@ -315,15 +329,6 @@ static int mipi_JDI_get_cabc(struct platform_device *pdev) {
 
 static void mipi_JDI_set_sre(struct platform_device *pdev, int level)
 {
-	unsigned int sre_value = 0;
-
-	if (level == 1)
-		sre_value = SRE_WEAK;
-	else if (level == 2)
-		sre_value = SRE_MEDIUM;
-	else if (level == 3)
-		sre_value = SRE_STRONG;
-
 	sre_level = level;
 	JDI_command_cabc();
 }
