@@ -89,6 +89,8 @@ static unsigned int cabc_level = 0;
 static unsigned int sre_level = 0;
 static bool aco_enabled = false;
 
+static bool lcd_off = false;
+
 static struct dsi_cmd_desc JDI_display_on_cmds[] = {
 	{DTYPE_DCS_WRITE, 1, 0, 0, 5,
 		sizeof(sw_reset), sw_reset},
@@ -184,6 +186,8 @@ static int mipi_JDI_lcd_on(struct platform_device *pdev)
 
 	pr_info("%s+\n", __func__);
 
+	lcd_off = false;
+
 	mfd = platform_get_drvdata(pdev);
 	if (!mfd)
 		return -ENODEV;
@@ -227,6 +231,8 @@ static int mipi_JDI_lcd_off(struct platform_device *pdev)
 	struct msm_fb_data_type *mfd;
 
 	pr_info("%s+\n", __func__);
+
+	lcd_off = true;
 
 	mfd = platform_get_drvdata(pdev);
 
@@ -379,6 +385,9 @@ static void mipi_JDI_set_backlight(struct msm_fb_data_type *mfd)
 			}
 			gpio_set_value_cansleep(gpio_LCD_BL_EN, 1);
 		} else {
+			if (!lcd_off)
+				return;
+
 			gpio_set_value_cansleep(gpio_LCD_BL_EN, 0);
 			if (bl_enable_sleep_control) {
 				usleep(10000);
@@ -436,6 +445,8 @@ static void mipi_JDI_set_recovery_backlight(struct msm_fb_data_type *mfd)
 static void mipi_JDI_lcd_shutdown(void)
 {
 	pr_info("%s+\n", __func__);
+
+	lcd_off = true;
 
 	gpio_set_value_cansleep(gpio_LCD_BL_EN, 0);
 	usleep(10000);
