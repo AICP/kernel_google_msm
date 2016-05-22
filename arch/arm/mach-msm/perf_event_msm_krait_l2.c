@@ -18,13 +18,63 @@
 
 #include <mach/msm-krait-l2-accessors.h>
 
+#define MAX_L2_PERIOD	((1ULL << 32) - 1)
+#define MAX_KRAIT_L2_CTRS 10
+
+#define PMCR_NUM_EV_SHIFT 11
+#define PMCR_NUM_EV_MASK 0x1f
+
+#define L2_EVT_MASK 0xfffff
+
+#define L2_SLAVE_EV_PREFIX 4
+
+#define L2PMCCNTR 0x409
+#define L2PMCCNTCR 0x408
+#define L2PMCCNTSR 0x40A
+#define L2CYCLE_CTR_BIT 31
+#define L2CYCLE_CTR_RAW_CODE 0xfe
+
+#define L2PMOVSR	0x406
+
+#define L2PMCR	0x400
+#define L2PMCR_RESET_ALL	0x6
+#define L2PMCR_GLOBAL_ENABLE	0x1
+#define L2PMCR_GLOBAL_DISABLE	0x0
+
+#define L2PMCNTENSET	0x403
+#define L2PMCNTENCLR	0x402
+
+#define L2PMINTENSET	0x405
+#define L2PMINTENCLR	0x404
+
+#define IA_L2PMXEVCNTCR_BASE	0x420
+#define IA_L2PMXEVTYPER_BASE	0x424
+#define IA_L2PMRESX_BASE	0x410
+#define IA_L2PMXEVFILTER_BASE	0x423
+#define IA_L2PMXEVCNTR_BASE	0x421
+
+/* event format is -e rsRCCG See get_event_desc() */
+
+#define EVENT_PREFIX_MASK	0xf0000
+#define EVENT_REG_MASK		0x0f000
+#define EVENT_GROUPSEL_MASK	0x0000f
+#define	EVENT_GROUPCODE_MASK	0x00ff0
+
+#define EVENT_PREFIX_SHIFT	16
+#define EVENT_REG_SHIFT		12
+#define EVENT_GROUPCODE_SHIFT	4
+
+#define	RESRX_VALUE_EN	0x80000000
+
+#define PMU_CODES_SIZE 64
+
 /*
  * The L2 PMU is shared between all CPU's, so protect
  * its bitmap access.
  */
 struct pmu_constraints {
 	u64 pmu_bitmap;
-	u8 codes[64];
+	u8 codes[PMU_CODES_SIZE];
 	raw_spinlock_t lock;
 } l2_pmu_constraints = {
 	.pmu_bitmap = 0,
@@ -419,7 +469,7 @@ static int msm_l2_test_set_ev_constraint(struct perf_event *event)
 	u8 group = evt_type & 0x0000F;
 	u8 code = (evt_type & 0x00FF0) >> 4;
 	unsigned long flags;
-	u32 err = 0;
+	int err = 0;
 	u64 bitmap_t;
 	u32 shift_idx;
 
@@ -435,6 +485,11 @@ static int msm_l2_test_set_ev_constraint(struct perf_event *event)
 	raw_spin_lock_irqsave(&l2_pmu_constraints.lock, flags);
 
 	shift_idx = ((reg * 4) + group);
+
+	if (shift_idx >= PMU_CODES_SIZE) {
+		err =  -EINVAL;
+		goto out;
+	}
 
 	bitmap_t = 1 << shift_idx;
 
@@ -476,12 +531,18 @@ static int msm_l2_clear_ev_constraint(struct perf_event *event)
 	unsigned long flags;
 	u64 bitmap_t;
 	u32 shift_idx;
+	int err = 1;
 
 	if (evt_prefix == L2_TRACECTR_PREFIX)
 		return 1;
 	raw_spin_lock_irqsave(&l2_pmu_constraints.lock, flags);
 
 	shift_idx = ((reg * 4) + group);
+
+	if (shift_idx >= PMU_CODES_SIZE) {
+		err =  -EINVAL;
+		goto out;
+	}
 
 	bitmap_t = 1 << shift_idx;
 
@@ -492,7 +553,8 @@ static int msm_l2_clear_ev_constraint(struct perf_event *event)
 	l2_pmu_constraints.codes[shift_idx] = -1;
 
 	raw_spin_unlock_irqrestore(&l2_pmu_constraints.lock, flags);
-	return 1;
+out:
+	return err;
 }
 
 int get_num_events(void)
